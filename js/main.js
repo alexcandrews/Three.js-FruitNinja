@@ -1,5 +1,5 @@
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, 1000);
+var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, 500);
 var renderer = new THREE.WebGLRenderer();
 
 var GRAVITY = .5;
@@ -18,9 +18,11 @@ function gravitate(fruit) {
 }
 
 function render() {
-    var removeFruits = [];
-    requestAnimationFrame(render);
+    renderer.render(scene, camera);
+}
 
+function update() {
+    var removeFruits = [];
     for (fruit of fruits) {
         fruit.position.x += fruit.velocity.x;
         if (fruit.position.y < 0) {
@@ -39,24 +41,35 @@ function render() {
         fruits.splice(fruits.indexOf(fruit), 1);
         scene.remove(fruit);
     }
+}
 
-    renderer.render(scene, camera);
+function animate() {
+    requestAnimationFrame(animate);
+    render();
+    update();
 };
 
+<<<<<<< HEAD
 function fruit() {
     var geometry = new THREE.SphereGeometry(80, 5, 1);
+=======
+function init() {
+    var geometry = new THREE.SphereGeometry(camera.fov * 0.615384615, 5, 1);
+>>>>>>> 20eccd96b5856a10c1a5fd0611d9a5f5ec3fd443
     var material = new THREE.MeshNormalMaterial({});
     var fruit = new THREE.Mesh(geometry, material);
-    fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 4);
-    fruit.position.y = 0;
     fruit.position.z = -Math.random() * camera.fov * .1;
+    fruit.position.y = 0;
+    fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 4);
     fruit.velocity = {};
-    fruit.velocity.x = 0;
+    fruit.velocity.z = Math.random() * 7 + 2;
     fruit.velocity.y = Math.random() * 10 + 10;
-    fruit.velocity.z = 5;
+    fruit.velocity.x = 0;
     fruits.push(fruit);
     scene.add(fruit);
 };
+
+setInterval(init, 1000);
 
 function onDocumentMouseDown( event ) {
 
@@ -75,6 +88,5 @@ function onDocumentMouseDown( event ) {
 	}
 }
 
-setInterval(fruit, 1000);
 
-render();
+animate();
