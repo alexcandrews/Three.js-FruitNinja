@@ -49,13 +49,8 @@ function animate() {
     update();
 };
 
-<<<<<<< HEAD
-function fruit() {
-    var geometry = new THREE.SphereGeometry(80, 5, 1);
-=======
 function init() {
     var geometry = new THREE.SphereGeometry(camera.fov * 0.615384615, 5, 1);
->>>>>>> 20eccd96b5856a10c1a5fd0611d9a5f5ec3fd443
     var material = new THREE.MeshNormalMaterial({});
     var fruit = new THREE.Mesh(geometry, material);
     fruit.position.z = -Math.random() * camera.fov * .1;
