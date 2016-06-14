@@ -14,10 +14,45 @@ var removeFruits = [];
 
 var hits = 0;
 var misses = 0;
-var total;
+var total = 0;
+var level = 5;
+var levelGoals = [{
+    "goal": 10,
+    "speed": 2
+}, {
+    "goal": 10,
+    "speed": 4
+}, {
+    "goal": 13,
+    "speed": 4
+}, {
+    "goal": 13,
+    "speed": 8
+}, {
+    "goal": 15,
+    "speed": 8
+}, {
+    "goal": 15,
+    "speed": 16
+}, ];
+
+function printScore() {
+    if (level < levelGoals.length) {
+        console.log("Hits: " + hits + "\nMisses: " + misses + "\nTotal: " + total +
+            "\nGoal: " + levelGoals[level].goal + "\nLevel: " + (level + 1));
+    } else {
+        console.log("YOU WIN!!!");
+    }
+}
 
 function gravitate(fruit) {
     fruit.velocity.y -= GRAVITY;
+}
+
+function bounce(fruit) {
+    if (fruit.position.y < 0) {
+        fruit.velocity.y *= -1;
+    }
 }
 
 function render() {
@@ -29,22 +64,20 @@ function update() {
         fruits.splice(fruits.indexOf(fruit), 1);
         scene.remove(fruit);
     }
-	removeFruits = [];
+    removeFruits = [];
     for (fruit of fruits) {
         fruit.position.x += fruit.velocity.x;
-        if (fruit.position.z < -1000) {
-            fruits.splice(fruits.indexOf(fruit), 1);
-            scene.remove(fruit);
+        if (fruit.position.z < -500) {
+            removeFruits.push(fruit);
             misses++;
+            printScore();
         } else {
-            if (fruit.position.y < 0) {
-                fruit.velocity.y *= -1;
-            }
             fruit.position.y += fruit.velocity.y;
             fruit.position.z -= fruit.velocity.z;
             fruit.rotation.x += .1;
             fruit.rotation.y += .1;
             gravitate(fruit);
+            bounce(fruit);
         }
     }
 }
@@ -56,22 +89,26 @@ function animate() {
 };
 
 function init() {
-    var geometry = new THREE.SphereGeometry(camera.fov * 0.2, 5, 1);
+    var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 5, 1);
     var material = new THREE.MeshNormalMaterial({});
     var fruit = new THREE.Mesh(geometry, material);
     fruit.position.z = -Math.random() * camera.fov * .1;
     fruit.position.y = 0;
     fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 2);
     fruit.velocity = {};
-    fruit.velocity.z = Math.random() * 7 + 2;
+    fruit.velocity.z = Math.random() * 7 + levelGoals[level].speed;
     fruit.velocity.y = Math.random() * 10 + 10;
     fruit.velocity.x = Math.random() * fruit.velocity.z;
     fruits.push(fruit);
     scene.add(fruit);
-	total++;
+    total++;
 };
 
-setInterval(init, 1000);
+setInterval(function() {
+    if (level < levelGoals.length) {
+        init()
+    }
+}, 1000);
 
 function onDocumentMouseDown(event) {
 
@@ -86,6 +123,13 @@ function onDocumentMouseDown(event) {
     if (intersects.length > 0) {
         removeFruits.push(intersects[0].object);
         hits++;
+        if (hits == levelGoals[level].goal) {
+            level++;
+            hits = 0;
+            misses = 0;
+            total = 0;
+        }
+        printScore();
     }
 }
 
