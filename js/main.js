@@ -15,7 +15,7 @@ var removeFruits = [];
 var hits = 0;
 var misses = 0;
 var total = 0;
-var level = 5;
+var level = 0;
 var levelGoals = [{
     "goal": 10,
     "speed": 2
