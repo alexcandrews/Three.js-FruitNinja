@@ -1,9 +1,13 @@
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, 500);
 var renderer = new THREE.WebGLRenderer();
+
 var GRAVITY = .5;
+
 renderer.setSize(window.innerWidth, window.innerHeight);
+
 document.body.appendChild(renderer.domElement);
+document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
 var fruits = [];
 
@@ -59,5 +63,20 @@ function init() {
 };
 
 setInterval(init, 1000);
+
+function onDocumentMouseDown( event ) {
+	console.log("fruity");
+
+	var mouse = new THREE.Vector2();
+	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+	var raycaster = new THREE.Raycaster();
+	raycaster.setFromCamera(mouse, camera);
+	var intersects = raycaster.intersectObjects(scene.children);
+
+	console.log(intersects);
+}
+
 
 animate();
