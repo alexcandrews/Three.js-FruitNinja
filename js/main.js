@@ -59,7 +59,6 @@ function fruit() {
 };
 
 function onDocumentMouseDown( event ) {
-	console.log("fruity");
 
 	var mouse = new THREE.Vector2();
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
