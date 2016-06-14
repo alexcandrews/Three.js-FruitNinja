@@ -7,9 +7,11 @@ var GRAVITY = .5;
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
-document.addEventListener( 'mousedown', onDocumentMouseDown, false );				
+document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
 var fruits = [];
+
+var hits = 0;
 
 function gravitate(fruit) {
     fruit.velocity.y -= GRAVITY;
@@ -42,7 +44,7 @@ function render() {
 };
 
 function fruit() {
-    var geometry = new THREE.SphereGeometry(camera.fov * .1, 5, 1);
+    var geometry = new THREE.SphereGeometry(80, 5, 1);
     var material = new THREE.MeshNormalMaterial({});
     var fruit = new THREE.Mesh(geometry, material);
     fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 4);
@@ -68,6 +70,9 @@ function onDocumentMouseDown( event ) {
 	var intersects = raycaster.intersectObjects(scene.children);
 
 	console.log(intersects);
+	if (intersects.length > 0) {
+		scene.remove(intersects[0].object);
+	}
 }
 
 setInterval(fruit, 1000);
