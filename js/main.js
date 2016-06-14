@@ -72,6 +72,7 @@ function onDocumentMouseDown( event ) {
 	console.log(intersects);
 	if (intersects.length > 0) {
 		scene.remove(intersects[0].object);
+		hits++;
 	}
 }
 
