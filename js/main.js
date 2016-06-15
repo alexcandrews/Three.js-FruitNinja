@@ -1,13 +1,19 @@
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, 500);
-var renderer = new THREE.WebGLRenderer();
-
 var GRAVITY = .5;
+var BOUNDS = 600;
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, BOUNDS);
+var renderer = new THREE.WebGLRenderer();
+var menu = document.getElementById('menu');
+var announcement = document.getElementById('announcement');
+var nextLevelButton = document.getElementById('nextLevelButton');
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
 document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+var spawnInterval = -1;
 
 var fruits = [];
 var removeFruits = [];
@@ -16,7 +22,7 @@ var hits = 0;
 var misses = 0;
 var total = 0;
 var level = 0;
-var levelGoals = [{
+var levelData = [{
     "goal": 10,
     "speed": 2
 }, {
@@ -35,15 +41,6 @@ var levelGoals = [{
     "goal": 15,
     "speed": 16
 }, ];
-
-function printScore() {
-    if (level < levelGoals.length) {
-        console.log("Hits: " + hits + "\nMisses: " + misses + "\nTotal: " + total +
-            "\nGoal: " + levelGoals[level].goal + "\nLevel: " + (level + 1));
-    } else {
-        console.log("YOU WIN!!!");
-    }
-}
 
 function gravitate(fruit) {
     fruit.velocity.y -= GRAVITY;
@@ -67,10 +64,9 @@ function update() {
     removeFruits = [];
     for (fruit of fruits) {
         fruit.position.x += fruit.velocity.x;
-        if (fruit.position.z < -500) {
+        if (fruit.position.z < -BOUNDS) {
             removeFruits.push(fruit);
             misses++;
-            printScore();
         } else {
             fruit.position.y += fruit.velocity.y;
             fruit.position.z -= fruit.velocity.z;
@@ -96,7 +92,7 @@ function init() {
     fruit.position.y = 0;
     fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 2);
     fruit.velocity = {};
-    fruit.velocity.z = Math.random() * 7 + levelGoals[level].speed;
+    fruit.velocity.z = Math.random() * 7 + levelData[level].speed;
     fruit.velocity.y = Math.random() * 10 + 10;
     fruit.velocity.x = Math.random() * fruit.velocity.z;
     fruits.push(fruit);
@@ -104,14 +100,33 @@ function init() {
     total++;
 };
 
-setInterval(function() {
-    if (level < levelGoals.length) {
-        init()
+function startLevel() {
+    console.log(level);
+    menu.style.visibility = "hidden";
+    for (fruit of fruits) {
+        fruits.splice(fruits.indexOf(fruit), 1);
+        scene.remove(fruit);
     }
-}, 1000);
+    spawnInterval = setInterval(init, 1000);
+}
+
+function nextLevel() {
+    clearInterval(spawnInterval);
+    if (level == 0) {
+        announcement.innerHTML = "Welcome to Fruity Shooty!";
+        nextLevelButton.innerHTML = "Start Level 1";
+    } else if (level >= levelData.length) {
+        level = 0;
+        announcement.innerHTML = "YOU WIN!!!";
+        nextLevelButton.innerHTML = "Play Again!";
+    } else {
+        announcement.innerHTML = "Level " + level + " Complete!";
+        nextLevelButton.innerHTML = "Start Level " + (level + 1);
+    }
+    menu.style.visibility = "visible";
+}
 
 function onDocumentMouseDown(event) {
-
     var mouse = new THREE.Vector2();
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -123,15 +138,15 @@ function onDocumentMouseDown(event) {
     if (intersects.length > 0) {
         removeFruits.push(intersects[0].object);
         hits++;
-        if (hits == levelGoals[level].goal) {
+        if (hits == levelData[level].goal) {
             level++;
             hits = 0;
             misses = 0;
             total = 0;
+            nextLevel();
         }
-        printScore();
     }
 }
 
-
+nextLevel();
 animate();

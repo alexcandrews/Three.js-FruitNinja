@@ -1,3 +1,30 @@
 body {
     margin: 0;
 }
+#menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #0000ff;
+    padding: 10px;
+    background-color: #a0f0ff;
+    visibility: hidden;
+}
+#menu *{
+	padding: 5px;
+	margin: auto;
+}
+#nextLevelButton {
+	position: relative;
+    color: #a0f0ff;
+    background-color: #0000ff;
+}
+#nextLevelButton:hover {
+    color: #0000ff;
+    background-color: #00d000;
+}
+#nextLevelButton:active{
+	top: 2px;
+}
