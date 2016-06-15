@@ -26,6 +26,7 @@ var spawnInterval = -1;
 
 var fruits = [];
 var removeFruits = [];
+var bombs = [];
 
 var hits = 0;
 var misses = 0;
@@ -51,15 +52,16 @@ var levelData = [{
     "speed": 16
 }, ];
 
+function updateScoreBoard() {
+    var scoreboard = document.getElementById('scoreboard');
+    scoreboard.innerHTML = '<h3>Hits: ' + hits + '</h3><h3>Misses: ' + misses + '</h3><h3>Level: ' + (level + 1) + '</h3>'
+}
+
 function resetScoreBoard() {
     hits = 0;
     misses = 0;
     total = 0;
-}
-
-function updateScoreBoard() {
-    var scoreboard = document.getElementById('scoreboard');
-    scoreboard.innerHTML = '<h3>Hits: ' + hits + '</h3><h3>Misses: ' + misses + '</h3><h3>Level: ' + level + '</h3>'
+    updateScoreBoard();
 }
 
 function gravitate(fruit) {
@@ -97,6 +99,20 @@ function update() {
             bounce(fruit);
         }
     }
+    for (bomb of bombs) {
+        bomb.position.x += bomb.velocity.x;
+        if (bomb.position.z < -BOUNDS) {
+            scene.remove(bomb);
+            bombs.splice(bombs.indexOf(bomb), 1);
+        } else {
+            bomb.position.y += bomb.velocity.y;
+            bomb.position.z -= bomb.velocity.z;
+            bomb.rotation.x += .1;
+            bomb.rotation.y += .1;
+            gravitate(bomb);
+            bounce(bomb);
+        }
+    }
 }
 
 function animate() {
@@ -104,6 +120,20 @@ function animate() {
     render();
     update();
 };
+
+function setProjectileSpeed(projectile) {
+    projectile.position.z = -Math.random() * camera.fov * .1;
+    projectile.position.y = 0;
+    if (projectile.projectile == "bomb") {
+        projectile.position.x = -(Math.random() * (camera.fov / 4) + (camera.fov / 2));
+    } else {
+        projectile.position.x = (Math.random() * (camera.fov / 4) + (camera.fov / 2));
+    }
+    projectile.velocity = {};
+    projectile.velocity.z = Math.random() * 7 + levelData[level].speed;
+    projectile.velocity.y = Math.random() * 10 + 10;
+    projectile.velocity.x = Math.random() * projectile.velocity.z;
+}
 
 function drawBomb() {
     var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 100, 100);
@@ -113,17 +143,22 @@ function drawBomb() {
         shininess: 10
     });
     var bomb = new THREE.Mesh(geometry, material);
-    bomb.position.z = -Math.random() * camera.fov * .1;
-    bomb.position.y = 0;
-    bomb.position.x = -(Math.random() * (camera.fov / 4) + (camera.fov / 2));
-    bomb.velocity = {};
-    bomb.velocity.z = Math.random() * 7 + levelData[level].speed;
-    bomb.velocity.y = Math.random() * 10 + 10;
-    bomb.velocity.x = Math.random() * bomb.velocity.z;
-
-    // TODO add bomb to list of bombs
-    fruits.push(bomb);
+    bomb.projectile = "bomb";
+    setProjectileSpeed(bomb);
+    bombs.push(bomb);
     scene.add(bomb);
+}
+
+function drawFruit() {
+    var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 5, 1);
+    var material = new THREE.MeshNormalMaterial({});
+    material.color = 0xff0000;
+    var fruit = new THREE.Mesh(geometry, material);
+    fruit.projectile = "fruit";
+    setProjectileSpeed(fruit);
+    fruits.push(fruit);
+    scene.add(fruit);
+    total++;
 }
 
 function drawBombConditions() {
@@ -135,39 +170,28 @@ function drawBombConditions() {
 }
 
 function init() {
-    var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 5, 1);
-    var material = new THREE.MeshNormalMaterial({});
-    material.color = 0xff0000;
-    var fruit = new THREE.Mesh(geometry, material);
-    fruit.position.z = -Math.random() * camera.fov * .1;
-    fruit.position.y = 0;
-    fruit.position.x = Math.random() * (camera.fov / 4) + (camera.fov / 2);
-    fruit.velocity = {};
-    fruit.velocity.z = Math.random() * 7 + levelData[level].speed;
-    fruit.velocity.y = Math.random() * 10 + 10;
-    fruit.velocity.x = Math.random() * fruit.velocity.z;
-    fruits.push(fruit);
-    scene.add(fruit);
-    total++;
+    drawFruit();
     if (drawBombConditions()) {
         drawBomb();
     }
 };
 
+function emptyArray(projectiles) {
+    for (var i = projectiles.length - 1; i > -1; i--) {
+        scene.remove(projectiles[i]);
+        projectiles.splice(projectiles.indexOf(projectiles[i]), 1);
+    }
+}
 
 function startLevel() {
-    console.log("Starting level: " + (level + 1));
     menu.style.visibility = "hidden";
     resetScoreBoard();
-    for (fruit of fruits) {
-        fruits.splice(fruits.indexOf(fruit), 1);
-        scene.remove(fruit);
-    }
+    emptyArray(fruits);
+    emptyArray(bombs);
     spawnInterval = setInterval(init, 1000);
 }
 
 function nextLevel() {
-    console.log("Moving to level " + (level + 1));
     clearInterval(spawnInterval);
     if (level == 0) {
         announcement.innerHTML = "Welcome to Fruity Shooty!";
@@ -193,13 +217,22 @@ function onDocumentMouseDown(event) {
     var intersects = raycaster.intersectObjects(scene.children);
 
     if (intersects.length > 0) {
-        removeFruits.push(intersects[0].object);
-        hits++;
-        if (hits == levelData[level].goal) {
-            level++;
-            nextLevel();
+        switch (intersects[0].object.projectile) {
+            case "fruit":
+                removeFruits.push(intersects[0].object);
+                hits++;
+                updateScoreBoard();
+                if (hits == levelData[level].goal) {
+                    level++;
+                    nextLevel();
+                }
+                break;
+            case "bomb":
+                hits--;
+                scene.remove(intersects[0].object);
+                updateScoreBoard();
+                break;
         }
-        updateScoreBoard();
     }
 }
 
