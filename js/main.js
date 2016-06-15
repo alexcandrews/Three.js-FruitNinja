@@ -6,9 +6,14 @@ var GRAVITY = .5;
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+var topLight = new THREE.DirectionalLight( 0xffffff, 1.5 );
+topLight.position.set( -10, 50, 50 );
+var bottomLight = new THREE.DirectionalLight( 0xffffff );
+bottomLight.position.set( -10, -50, 50 );
+scene.add(topLight);
+scene.add(bottomLight);
 
-
-
+var scoreboard = document.getElementById('scoreboard');
 
 document.body.appendChild(renderer.domElement);
 document.addEventListener('mousedown', onDocumentMouseDown, false);
@@ -40,15 +45,8 @@ var levelGoals = [{
     "speed": 16
 }, ];
 
-var info = document.createElement( 'div' );
-info.style.position = 'absolute';
-info.style.top = '30px';
-info.style.width = '100%';
-info.style.textAlign = 'center';
-info.style.color = '#f00';
-info.style.fontFamily = 'Monospace';
-info.innerHTML = 'Hits: ' + hits + '<br>Misses: ' + misses + '<br>Level: ' + level;
-document.body.appendChild( info );
+
+
 
 function printScore() {
     if (level < levelGoals.length) {
@@ -60,7 +58,8 @@ function printScore() {
 }
 
 function updateScoreBoard() {
-  info.innerHTML = 'Hits: ' + hits + '<br>Misses: ' + misses + '<br>Level: ' + level;
+  var scoreboard = document.getElementById('scoreboard');
+  scoreboard.innerHTML = '<h3>Hits: ' + hits + '</h3><h3>Misses: ' + misses + '</h3><h3>Level: ' + level + '</h3>'
 }
 
 function gravitate(fruit) {
@@ -110,6 +109,7 @@ function animate() {
 function init() {
     var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 5, 1);
     var material = new THREE.MeshNormalMaterial({});
+    material.color = 0xff0000;
     var fruit = new THREE.Mesh(geometry, material);
     fruit.position.z = -Math.random() * camera.fov * .1;
     fruit.position.y = 0;
@@ -123,9 +123,41 @@ function init() {
     total++;
 };
 
+function drawBomb() {
+  var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 100, 100);
+  var material = new THREE.MeshPhongMaterial( {
+    color: 0x990000,
+    specular: 0x222222,
+    shininess: 10
+  } );
+  var bomb = new THREE.Mesh(geometry, material);
+  bomb.position.z = -Math.random() * camera.fov * .1;
+  bomb.position.y = 0;
+  bomb.position.x = -(Math.random() * (camera.fov / 4) + (camera.fov / 2));
+  bomb.velocity = {};
+  bomb.velocity.z = Math.random() * 7 + levelGoals[level].speed;
+  bomb.velocity.y = Math.random() * 10 + 10;
+  bomb.velocity.x = Math.random() * bomb.velocity.z;
+
+  // TODO add bomb to list of bombs
+  fruits.push(bomb);
+  scene.add(bomb);
+}
+
+function drawBombConditions() {
+  if (level >= 0 && total % 2 == 0 && Math.floor(Math.random() * total) % 2 == 0){
+    return true;
+  } else {
+    return false;
+  }
+}
+
 setInterval(function() {
     if (level < levelGoals.length) {
         init()
+        if (drawBombConditions()) {
+          drawBomb();
+        }
     }
 }, 1000);
 
