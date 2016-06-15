@@ -193,9 +193,10 @@ function startLevel() {
 
 function nextLevel() {
     clearInterval(spawnInterval);
+    spawnInterval = -1;
     if (level == 0) {
         announcement.innerHTML = "Welcome to Fruity Shooty!";
-        nextLevelButton.innerHTML = "Start Level 1";
+        nextLevelButton.innerHTML = "Start";
     } else if (level >= levelData.length) {
         level = 0;
         announcement.innerHTML = "YOU WIN!!!";
@@ -208,30 +209,32 @@ function nextLevel() {
 }
 
 function onDocumentMouseDown(event) {
-    var mouse = new THREE.Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    if (spawnInterval != -1) {
+        var mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    var raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, camera);
-    var intersects = raycaster.intersectObjects(scene.children);
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children);
 
-    if (intersects.length > 0) {
-        switch (intersects[0].object.projectile) {
-            case "fruit":
-                removeFruits.push(intersects[0].object);
-                hits++;
-                updateScoreBoard();
-                if (hits == levelData[level].goal) {
-                    level++;
-                    nextLevel();
-                }
-                break;
-            case "bomb":
-                hits--;
-                scene.remove(intersects[0].object);
-                updateScoreBoard();
-                break;
+        if (intersects.length > 0) {
+            switch (intersects[0].object.projectile) {
+                case "fruit":
+                    removeFruits.push(intersects[0].object);
+                    hits++;
+                    updateScoreBoard();
+                    if (hits == levelData[level].goal) {
+                        level++;
+                        nextLevel();
+                    }
+                    break;
+                case "bomb":
+                    hits--;
+                    scene.remove(intersects[0].object);
+                    updateScoreBoard();
+                    break;
+            }
         }
     }
 }
