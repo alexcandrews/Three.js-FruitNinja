@@ -6,6 +6,10 @@ var GRAVITY = .5;
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 
+
+
+
+
 document.body.appendChild(renderer.domElement);
 document.addEventListener('mousedown', onDocumentMouseDown, false);
 
@@ -36,6 +40,16 @@ var levelGoals = [{
     "speed": 16
 }, ];
 
+var info = document.createElement( 'div' );
+info.style.position = 'absolute';
+info.style.top = '30px';
+info.style.width = '100%';
+info.style.textAlign = 'center';
+info.style.color = '#f00';
+info.style.fontFamily = 'Monospace';
+info.innerHTML = 'Hits: ' + hits + '<br>Misses: ' + misses + '<br>Level: ' + level;
+document.body.appendChild( info );
+
 function printScore() {
     if (level < levelGoals.length) {
         console.log("Hits: " + hits + "\nMisses: " + misses + "\nTotal: " + total +
@@ -43,6 +57,10 @@ function printScore() {
     } else {
         console.log("YOU WIN!!!");
     }
+}
+
+function updateScoreBoard() {
+  info.innerHTML = 'Hits: ' + hits + '<br>Misses: ' + misses + '<br>Level: ' + level;
 }
 
 function gravitate(fruit) {
@@ -71,6 +89,7 @@ function update() {
             removeFruits.push(fruit);
             misses++;
             printScore();
+            updateScoreBoard();
         } else {
             fruit.position.y += fruit.velocity.y;
             fruit.position.z -= fruit.velocity.z;
@@ -130,6 +149,7 @@ function onDocumentMouseDown(event) {
             total = 0;
         }
         printScore();
+        updateScoreBoard();
     }
 }
 
