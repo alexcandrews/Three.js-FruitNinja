@@ -28,3 +28,16 @@ body {
 #nextLevelButton:active{
 	top: 2px;
 }
+
+#scoreboard {
+  position: absolute;
+  top: 30px;
+  width: 100%;
+  text-align: center;
+  color: #f00;
+  font-family: monospace;
+}
+
+h3 {
+  margin:5px;
+}
