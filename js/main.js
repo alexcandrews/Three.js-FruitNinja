@@ -29,10 +29,15 @@ var movementSpeed = 50;
 var totalObjects = 5000;
 var objectSize = 1;
 var sizeRandomness = 2000;
-var colors = [0xFF0FFF, 0xCCFF00, 0xFF000F, 0x996600, 0xFFFFFF];
+var colors = [0xFF000F];
 /////////////////////////////////
 var dirs = [];
 var parts = [];
+
+var container = document.createElement('div');
+document.body.appendChild(container);
+
+window.addEventListener('mousedown', onclick, false);
 
 
 var spawnInterval = -1;
@@ -241,7 +246,7 @@ function ExplodeAnimation(x,y)
     geometry.vertices.push( vertex );
     dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
   }
-  var material = new THREE.PointsMaterial( { size: objectSize,  color: colors[Math.round(Math.random() * colors.length)] });
+  var material = new THREE.PointsMaterial( { size: objectSize,  color: 0xffffff });
   var particles = new THREE.Points( geometry, material );
 
   this.object = particles;
@@ -270,8 +275,8 @@ function ExplodeAnimation(x,y)
 
 
 
-function bombExplosion(intersection) {
-  parts.push(new ExplodeAnimation(Math.floor(intersection.point.x),Math.floor(intersection.point.y)));
+function bombExplosion(x,y) {
+  parts.push(new ExplodeAnimation(x,y));
 }
 
 window.addEventListener('resize', onWindowResize, false);
@@ -296,7 +301,6 @@ function onDocumentMouseDown(event) {
         var intersects = raycaster.intersectObjects(scene.children);
 
         if (intersects.length > 0) {
-          console.log("EXPLOSION CASE");
             switch (intersects[0].object.projectile) {
                 case "fruit":
                     removeFruits.push(intersects[0].object);
@@ -309,7 +313,7 @@ function onDocumentMouseDown(event) {
                     break;
                 case "bomb":
                     hits--;
-                    bombExplosion(intersects[0]);
+                    bombExplosion(0,0);
                     scene.remove(intersects[0].object);
 
                     updateScoreBoard();

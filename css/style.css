@@ -41,3 +41,16 @@ body {
 h3 {
   margin:5px;
 }
+
+#dir{
+    background-color: #ffffff;
+    position: absolute;
+    font-family:"Times New Roman";
+    font-size:12px;
+    font-weight:bold;
+    min-width:300px;
+    text-align:center;
+    right: 5px;
+    top: 5px;
+    opacity:0.5;
+}
