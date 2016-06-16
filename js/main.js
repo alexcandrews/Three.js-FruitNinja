@@ -22,6 +22,17 @@ var scoreboard = document.getElementById('scoreboard');
 document.body.appendChild(renderer.domElement);
 document.addEventListener('mousedown', onDocumentMouseDown, false);
 
+//////////////explosion settings/////////
+var movementSpeed = 50;
+var totalObjects = 5000;
+var objectSize = 1;
+var sizeRandomness = 2000;
+var colors = [0xFF0FFF, 0xCCFF00, 0xFF000F, 0x996600, 0xFFFFFF];
+/////////////////////////////////
+var dirs = [];
+var parts = [];
+
+
 var spawnInterval = -1;
 
 var fruits = [];
@@ -75,7 +86,12 @@ function bounce(fruit) {
 }
 
 function render() {
-    renderer.render(scene, camera);
+  var pCount = parts.length;
+          while(pCount--) {
+            parts[pCount].updateExplosion();
+          }
+
+  renderer.render(scene, camera);
 }
 
 function update() {
@@ -184,6 +200,7 @@ function emptyArray(projectiles) {
 }
 
 function startLevel() {
+    parts.push(new ExplodeAnimation(0, 0));
     menu.style.visibility = "hidden";
     resetScoreBoard();
     emptyArray(fruits);
@@ -208,6 +225,57 @@ function nextLevel() {
     menu.style.visibility = "visible";
 }
 
+
+
+// parts.push(new ExplodeAnimation(0, 0));
+
+function ExplodeAnimation(x,y)
+{
+  var geometry = new THREE.Geometry();
+
+  for (i = 0; i < totalObjects; i ++)
+  {
+    var vertex = new THREE.Vector3();
+    vertex.x = x;
+    vertex.y = y;
+    vertex.z = 0;
+
+    geometry.vertices.push( vertex );
+    dirs.push({x:(Math.random() * movementSpeed)-(movementSpeed/2),y:(Math.random() * movementSpeed)-(movementSpeed/2),z:(Math.random() * movementSpeed)-(movementSpeed/2)});
+  }
+  var material = new THREE.PointsMaterial( { size: objectSize,  color: colors[Math.round(Math.random() * colors.length)] });
+  var particles = new THREE.Points( geometry, material );
+
+  this.object = particles;
+  this.status = true;
+
+  this.xDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+  this.yDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+  this.zDir = (Math.random() * movementSpeed)-(movementSpeed/2);
+
+  scene.add( this.object  );
+
+  this.updateExplosion = function(){
+    if (this.status == true){
+      var pCount = totalObjects;
+      while(pCount--) {
+        var particle =  this.object.geometry.vertices[pCount]
+        particle.y += dirs[pCount].y;
+        particle.x += dirs[pCount].x;
+        particle.z += dirs[pCount].z;
+      }
+      this.object.geometry.verticesNeedUpdate = true;
+    }
+  }
+
+}
+
+
+
+function bombExplosion(intersection) {
+  parts.push(new ExplodeAnimation(Math.floor(intersection.point.x),Math.floor(intersection.point.y)));
+}
+
 function onDocumentMouseDown(event) {
     if (spawnInterval != -1) {
         var mouse = new THREE.Vector2();
@@ -219,6 +287,7 @@ function onDocumentMouseDown(event) {
         var intersects = raycaster.intersectObjects(scene.children);
 
         if (intersects.length > 0) {
+          console.log("EXPLOSION CASE");
             switch (intersects[0].object.projectile) {
                 case "fruit":
                     removeFruits.push(intersects[0].object);
@@ -231,8 +300,10 @@ function onDocumentMouseDown(event) {
                     break;
                 case "bomb":
                     hits--;
+                    bombExplosion(intersects[0]);
                     scene.remove(intersects[0].object);
                     updateScoreBoard();
+
                     break;
             }
         }
