@@ -1,8 +1,10 @@
 var GRAVITY = .5;
-var BOUNDS = 600;
+var OUTER_BOUND = 600;
+var MAKE_FRUIT_FREQUENCY = 1000;
+var MAKE_BOMB_FREQUENCY = 800;
 
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, BOUNDS);
+var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, OUTER_BOUND);
 var renderer = new THREE.WebGLRenderer();
 var menu = document.getElementById('menu');
 var announcement = document.getElementById('announcement');
@@ -23,6 +25,7 @@ document.body.appendChild(renderer.domElement);
 document.addEventListener('mousedown', onDocumentMouseDown, false);
 
 var spawnInterval = -1;
+var bombSpawnInterval = -1;
 
 var fruits = [];
 var removeFruits = [];
@@ -85,12 +88,12 @@ function update() {
     }
     removeFruits = [];
     for (fruit of fruits) {
-        fruit.position.x += fruit.velocity.x;
-        if (fruit.position.z < -BOUNDS) {
+        if (fruit.position.z < -OUTER_BOUND) {
             removeFruits.push(fruit);
             misses++;
             updateScoreBoard();
         } else {
+	        fruit.position.x += fruit.velocity.x;
             fruit.position.y += fruit.velocity.y;
             fruit.position.z -= fruit.velocity.z;
             fruit.rotation.x += .1;
@@ -101,7 +104,7 @@ function update() {
     }
     for (bomb of bombs) {
         bomb.position.x += bomb.velocity.x;
-        if (bomb.position.z < -BOUNDS) {
+        if (bomb.position.z < -OUTER_BOUND) {
             scene.remove(bomb);
             bombs.splice(bombs.indexOf(bomb), 1);
         } else {
@@ -133,6 +136,7 @@ function setProjectileSpeed(projectile) {
     projectile.velocity.z = Math.random() * 7 + levelData[level].speed;
     projectile.velocity.y = Math.random() * 10 + 10;
     projectile.velocity.x = Math.random() * projectile.velocity.z;
+	projectile.velocity.x += projectile.projectile == "bomb" ? projectile.velocity.z :  -projectile.velocity.z;
 }
 
 function drawBomb() {
@@ -150,7 +154,7 @@ function drawBomb() {
 }
 
 function drawFruit() {
-    var geometry = new THREE.SphereGeometry(camera.fov * 0.5, 5, 1);
+    var geometry = new THREE.SphereGeometry(camera.fov * 0.3, 5, 1);
     var material = new THREE.MeshNormalMaterial({});
     material.color = 0xff0000;
     var fruit = new THREE.Mesh(geometry, material);
@@ -161,20 +165,11 @@ function drawFruit() {
     total++;
 }
 
-function drawBombConditions() {
-    if (level >= 0 && total % 2 == 0 && Math.floor(Math.random() * total) % 2 == 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-function init() {
-    drawFruit();
-    if (drawBombConditions()) {
+function makeBomb() {
+    if (Math.random() > .8) {
         drawBomb();
     }
-};
+}
 
 function emptyArray(projectiles) {
     for (var i = projectiles.length - 1; i > -1; i--) {
@@ -188,11 +183,13 @@ function startLevel() {
     resetScoreBoard();
     emptyArray(fruits);
     emptyArray(bombs);
-    spawnInterval = setInterval(init, 1000);
+    spawnInterval = setInterval(drawFruit, MAKE_FRUIT_FREQUENCY);
+    bombSpawnInterval = setInterval(makeBomb, MAKE_BOMB_FREQUENCY);
 }
 
 function nextLevel() {
     clearInterval(spawnInterval);
+    clearInterval(bombSpawnInterval);
     spawnInterval = -1;
     if (level == 0) {
         announcement.innerHTML = "Welcome to Fruity Shooty!";
@@ -231,7 +228,7 @@ function onDocumentMouseDown(event) {
                     break;
                 case "bomb":
                     hits--;
-                    scene.remove(intersects[0].object);
+                    // scene.remove(intersects[0].object);
                     updateScoreBoard();
                     break;
             }
