@@ -1,7 +1,8 @@
 var GRAVITY = .5;
-var OUTER_BOUND = 600;
+var OUTER_BOUND = 1000;
 var MAKE_FRUIT_FREQUENCY = 1000;
 var MAKE_BOMB_FREQUENCY = 800;
+var MAKE_BONUS_TOKEN_FREQUENCY = 500;
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(130, window.innerWidth / window.innerHeight, 0.1, OUTER_BOUND);
@@ -42,6 +43,8 @@ window.addEventListener('mousedown', onclick, false);
 
 var spawnInterval = -1;
 var bombSpawnInterval = -1;
+var bonusTokenPresent = false;
+var bonusToken;
 
 var fruits = [];
 var removeFruits = [];
@@ -83,8 +86,8 @@ function resetScoreBoard() {
     updateScoreBoard();
 }
 
-function gravitate(fruit) {
-    fruit.velocity.y -= GRAVITY;
+function gravitate(projectile) {
+  projectile.velocity.y -= GRAVITY;
 }
 
 function bounce(fruit) {
@@ -93,16 +96,34 @@ function bounce(fruit) {
     }
 }
 
+function spiral(projectile) {
+  var distance = Math.sqrt(Math.pow(projectile.position.x, 2) + Math.pow(projectile.position.y, 2));
+  var theta = Math.atan(projectile.position.x / projectile.position.y);
+  projectile.position.x = projectile.radius * Math.cos(theta);
+  projectile.position.y = projectile.radius * Math.sin(theta);
+  projectile.position.z += projectile.velocity.z;
+}
+
 function render() {
   var pCount = parts.length;
-          while(pCount--) {
-            parts[pCount].updateExplosion();
-          }
+  while(pCount--) {
+    parts[pCount].updateExplosion();
+  }
 
   renderer.render(scene, camera);
 }
 
 function update() {
+
+    if (bonusTokenPresent) {
+      if (bonusToken.position.x < window.innerWidth) {
+        bonusToken.rotation.x += 0.1;
+        spiral(bonusToken);
+      } else {
+        bonusTokenPresent = false;
+        scene.remove( bonusToken );
+      }
+    }
     for (fruit of removeFruits) {
         fruits.splice(fruits.indexOf(fruit), 1);
         scene.remove(fruit);
@@ -192,6 +213,26 @@ function makeBomb() {
     }
 }
 
+function drawBonusToken() {
+  if (total > 0 && total % 2 == 0 && !bonusTokenPresent) {
+    bonusTokenPresent = true;
+    var geometry = new THREE.CylinderGeometry( 30,30,10,300 );
+    var material = new THREE.MeshPhongMaterial({ color: 0xff9900, specular: 0x009900, shininess: 30, shading: THREE.FlatShading });
+    bonusToken = new THREE.Mesh( geometry, material );
+    scene.add( bonusToken );
+    // bonusToken.position.x = -window.innerWidth;
+    bonusToken.center = { x: 0, y: 0, z: 0 };
+    bonusToken.radius = window.innerHeight / 4;
+    bonusToken.force = GRAVITY;
+    bonusToken.position.x = bonusToken.radius;
+    bonusToken.position.y = bonusToken.radius;
+    bonusToken.position.z = -200;
+    bonusToken.rotation.x = 90;
+    bonusToken.velocity = { x: 0, y: 0, z: -2 };
+    bonusToken.projectile = "bonusToken";
+  }
+}
+
 function emptyArray(projectiles) {
     for (var i = projectiles.length - 1; i > -1; i--) {
         scene.remove(projectiles[i]);
@@ -201,12 +242,14 @@ function emptyArray(projectiles) {
 
 function startLevel() {
     parts.push(new ExplodeAnimation(0, 0));
+    drawBonusToken();
     menu.style.visibility = "hidden";
     resetScoreBoard();
     emptyArray(fruits);
     emptyArray(bombs);
     spawnInterval = setInterval(drawFruit, MAKE_FRUIT_FREQUENCY);
     bombSpawnInterval = setInterval(makeBomb, MAKE_BOMB_FREQUENCY);
+    bonusTokenSpawnInterval = setInterval(drawBonusToken, MAKE_BONUS_TOKEN_FREQUENCY);
 }
 
 function nextLevel() {
@@ -312,12 +355,15 @@ function onDocumentMouseDown(event) {
                     }
                     break;
                 case "bomb":
-                    hits--;
+                    hits = 0;
                     bombExplosion(0,0);
                     scene.remove(intersects[0].object);
-
                     updateScoreBoard();
-
+                    break;
+                case "bonusToken":
+                    console.log("hit the bonus");
+                    bonusTokenPresent = false;
+                    scene.remove( bonusToken );
                     break;
             }
         }
